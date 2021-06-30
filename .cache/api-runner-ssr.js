@@ -1,12 +1,15 @@
 var plugins = [{
-      plugin: require('C:/Users/monsh/Documents/HackInnovaccionSherpas/node_modules/gatsby-plugin-react-helmet/gatsby-ssr'),
+      name: 'gatsby-plugin-react-helmet',
+      plugin: require('/workspaces/DemoGatsby/node_modules/gatsby-plugin-react-helmet/gatsby-ssr'),
       options: {"plugins":[]},
     },{
-      plugin: require('C:/Users/monsh/Documents/HackInnovaccionSherpas/node_modules/gatsby-plugin-sitemap/gatsby-ssr'),
-      options: {"plugins":[],"output":"/sitemap.xml","createLinkInHead":true},
+      name: 'gatsby-plugin-sitemap',
+      plugin: require('/workspaces/DemoGatsby/node_modules/gatsby-plugin-sitemap/gatsby-ssr'),
+      options: {"plugins":[],"output":"/sitemap","createLinkInHead":true,"entryLimit":45000,"query":"{ site { siteMetadata { siteUrl } } allSitePage { nodes { path } } }","excludes":[]},
     },{
-      plugin: require('C:/Users/monsh/Documents/HackInnovaccionSherpas/node_modules/gatsby-plugin-google-analytics/gatsby-ssr'),
-      options: {"plugins":[],"trackingId":"YOUR_GOOGLE_ANALYTICS_TRACKING_ID","head":false,"anonymize":false,"respectDNT":false,"exclude":[],"pageTransitionDelay":0},
+      name: 'gatsby-plugin-google-analytics',
+      plugin: require('/workspaces/DemoGatsby/node_modules/gatsby-plugin-google-analytics/gatsby-ssr'),
+      options: {"plugins":[],"trackingId":"YOUR_GOOGLE_ANALYTICS_TRACKING_ID","head":false,"anonymize":false,"respectDNT":false,"exclude":[],"pageTransitionDelay":0,"enableWebVitalsTracking":false},
     }]
 // During bootstrap, we write requires at top of this file which looks like:
 // var plugins = [
@@ -34,11 +37,21 @@ module.exports = (api, args, defaultReturn, argTransform) => {
     if (!plugin.plugin[api]) {
       return undefined
     }
-    const result = plugin.plugin[api](args, plugin.options)
-    if (result && argTransform) {
-      args = argTransform({ args, result })
+    try {
+      const result = plugin.plugin[api](args, plugin.options)
+      if (result && argTransform) {
+        args = argTransform({ args, result })
+      }
+      return result
+    } catch (e) {
+      if (plugin.name !== `default-site-plugin`) {
+        // default-site-plugin is user code and will print proper stack trace,
+        // so no point in annotating error message pointing out which plugin is root of the problem
+        e.message += ` (from plugin: ${plugin.name})`
+      }
+
+      throw e
     }
-    return result
   })
 
   // Filter out undefined results.
